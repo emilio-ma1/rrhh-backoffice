@@ -1,1 +1,3 @@
-# rrhh-backoffice
+# rrhh_backoffice
+
+A new Flutter project.
