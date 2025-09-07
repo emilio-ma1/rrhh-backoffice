@@ -31,7 +31,7 @@ class LoginScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 24, color: Colors.white),
                   ),
                   const Text(
-                    'Nombre_aplicación',
+                    'Putnik',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
