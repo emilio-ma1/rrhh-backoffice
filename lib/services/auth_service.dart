@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class AuthService {
   // Reemplaza esta URL con la URL de tu API desplegada en Render
-  final String _baseUrl = 'https://putnik-api-1.onrender.com';
+  final String _baseUrl = 'https://putnik-python-api.onrender.com';
 
   // --- Método para Iniciar Sesión ---
   Future<String?> login(String email, String password) async {
