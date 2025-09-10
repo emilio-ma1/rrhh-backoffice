@@ -1,14 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home_container_screen.dart';
+import '../services/auth_service.dart'; // Asegúrate de que la ruta a tu servicio sea correcta
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController userController = TextEditingController();
-    final TextEditingController passController = TextEditingController();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
+class _LoginScreenState extends State<LoginScreen> {
+  // Controllers para leer el texto de los campos
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Instancia de nuestro servicio de autenticación
+  final AuthService _authService = AuthService();
+
+  // Variable para manejar el estado de carga
+  bool _isLoading = false;
+
+  /// Método para manejar el proceso de login
+  Future<void> _login() async {
+    // Si ya está cargando, no hacer nada
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Llama al servicio para intentar iniciar sesión
+    final token = await _authService.login(
+      _emailController.text,
+      _passwordController.text,
+    );
+
+    // Es importante verificar si el widget sigue "montado" antes de navegar
+    if (!mounted) return;
+
+    if (token != null) {
+      // Éxito: Guardar el token y navegar a la pantalla principal
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('authToken', token);
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeContainerScreen()),
+      );
+    } else {
+      // Error: Mostrar un mensaje al usuario
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text('Email o contraseña incorrectos.'),
+        ),
+      );
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Limpiar los controllers cuando el widget se destruye para liberar memoria
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -17,9 +80,10 @@ class LoginScreen extends StatelessWidget {
           Image.asset(
             'assets/images/background_login.jpg', // Cambia por tu imagen de login
             fit: BoxFit.cover,
+            // Añadir un filtro de color para oscurecer la imagen si es muy clara
+            color: Colors.black.withOpacity(0.4),
+            colorBlendMode: BlendMode.darken,
           ),
-          // Capa oscura para mejorar legibilidad
-          Container(color: Colors.black.withOpacity(0.5)),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -39,56 +103,64 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 50),
-                  // Campos de texto (no funcionales aún)
+                  // Campo de Email
                   TextField(
-                    controller: userController,
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.black87),
                     decoration: InputDecoration(
-                      labelText: 'Usuario',
+                      labelText: 'Email',
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.8),
+                      fillColor: Colors.white.withOpacity(0.9),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
+                  // Campo de Contraseña
                   TextField(
-                    controller: passController,
+                    controller: _passwordController,
                     obscureText: true,
+                    style: const TextStyle(color: Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Contraseña',
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.8),
+                      fillColor: Colors.white.withOpacity(0.9),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
                   const SizedBox(height: 30),
-                  // Botón de Iniciar Sesión
+                  // Botón de Iniciar Sesión o Indicador de Carga
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Navega a la pantalla principal sin poder volver atrás
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => const HomeContainerScreen(),
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                        : ElevatedButton(
+                            onPressed: _login, // Llama a la función de login
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Text(
+                              'Iniciar Sesión',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        'Iniciar Sesión',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 15),
                   // Botón de Crear Cuenta
@@ -96,7 +168,7 @@ class LoginScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Lógica futura para crear cuenta
+                        // TODO: Implementar navegación a la pantalla de registro
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,

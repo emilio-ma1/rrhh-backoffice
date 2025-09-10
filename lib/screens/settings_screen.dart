@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <--- 1. Importa SharedPreferences
 import '../providers/theme_provider.dart';
 import 'login_screen.dart';
 
@@ -19,15 +20,14 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         children: [
           // Sección de perfil de usuario
-          Row(
+          const Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 40,
-                // Puedes usar una NetworkImage o un AssetImage aquí
                 backgroundImage: AssetImage('assets/images/user_avatar.png'),
               ),
-              const SizedBox(width: 16),
-              const Column(
+              SizedBox(width: 16),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -69,8 +69,16 @@ class SettingsScreen extends StatelessWidget {
 
           // Botón de Cerrar Sesión
           ElevatedButton(
-            onPressed: () {
-              // Navega a la pantalla de login y elimina todas las rutas anteriores
+            // 2. Convierte la función a 'async' para poder usar 'await'
+            onPressed: () async {
+              // 3. Obtiene la instancia de SharedPreferences
+              final prefs = await SharedPreferences.getInstance();
+              // 4. Borra el token guardado
+              await prefs.remove('authToken');
+
+              // 5. Navega a la pantalla de login y elimina todas las rutas anteriores
+              // Es importante verificar si el widget sigue montado antes de navegar
+              if (!context.mounted) return;
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
                 (Route<dynamic> route) => false,
@@ -87,8 +95,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('Acerca de nosotros'),
+            leading: const Icon(Icons.info_outline),
+            title: const Text('Acerca de nosotros'),
             onTap: () {
               // Lógica futura para mostrar información
             },
